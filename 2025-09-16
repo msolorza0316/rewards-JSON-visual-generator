@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Editable Rewards Card</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <!-- ===== Blue Banner Card ===== -->
+  <div class="banner" id="rewardsCard">
+    <div class="banner__top" data-edit="ribbon" data-type="text">FINDER REWARDS EXCLUSIVE</div>
+    <div class="banner__body">
+      <div class="logo-box" data-edit="logo" title="Click to set an Image URL or drop/paste an image">
+        <img alt="Logo" id="logoImg" referrerpolicy="no-referrer" src="https://www.finder.com/niche-builder/664f49da27c8f.png?fit=1200">
+      </div>
+      <div>
+        <span class="category-pill" data-edit="badge">CHECKING ACCOUNT</span>
+        <h2 class="headline" data-edit="headline">Get <span class="amount">$150</span> from Finder</h2>
+        <p class="copy" data-edit="copy">Open a Chime Checking Account online through Finder by October 30, 2025 to receive a $150 digital Visa gift card.</p>
+        <div class="tnc-link" data-urlcontrol="tnc" role="button" tabindex="0" title="Click to set the Terms & Conditions link">
+          <span data-edit="tncText">Separate T&amp;Cs apply</span>
+        </div>
+      </div>
+      <a href="#" class="cta" data-edit="ctaLink"><span class="cta__label" data-edit="ctaText">GET DEAL</span></a>
+      <div class="tip">Click sections to edit. Enter saves. Esc cancels. Click logo, button area, or terms link to set URLs.</div>
+    </div>
+  </div>
+
+  <!-- ===== Modal-style Card (2nd) ===== -->
+  <div class="modal-card" id="modalCard">
+    <div class="modal-art" aria-label="Image placeholder"></div>
+    <h2 class="modal-title" data-edit="modalTitle">Get $150 from Finder</h2>
+
+    <div class="steps">
+      <div class="step" data-edit="step1">
+        <div class="num">1</div>
+        <div class="text">
+          <div class="title" data-edit="step1Title">Click Get $150 Reward</div>
+          <div class="sub" data-edit="step1Sub">And quickly create a Finder account.</div>
+        </div>
+      </div>
+
+      <div class="step" data-edit="step2">
+        <div class="num">2</div>
+        <div class="text">
+          <div class="title" data-edit="step2Title">Open a Chime Checking Account and set up direct deposit</div>
+          <div class="sub" data-edit="step2Sub">Must receive a qualifying direct deposit of $200 or more within 30 days from enrollment.</div>
+        </div>
+      </div>
+
+      <div class="step" data-edit="step3">
+        <div class="num">3</div>
+        <div class="text">
+          <div class="title" data-edit="step3Title">Receive $150 digital Visa gift card within 120 days.</div>
+          <div class="sub" data-edit="step3Sub">Your Finder account email must be the same as the email used to create your Chime Checking Account.</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="modal-cta" type="button" data-nourl><span data-edit="modalPrimaryText">GET $150 REWARD</span></button>
+    <button class="modal-cta-secondary" type="button" data-nourl><span data-edit="modalSecondaryText">SKIP REWARD, CONTINUE TO CHIME</span></button>
+
+    <div class="modal-footer" data-edit="modalFooter">Ends on October 30, 2025 T&amp;Cs apply</div>
+  </div>
+
+  <!-- ===== Signup-style Card (3rd) ===== -->
+  <div class="sign-card" id="signupCard">
+    <div class="sign-art" aria-label="Image placeholder"></div>
+
+    <h2 class="sign-title" data-edit="signTitle">Get $150 from Finder</h2>
+    <div class="sign-note" data-edit="signSubtitle">
+      Use the same email address to register with Finder and Chime to qualify for the $150 digital Visa gift card.
+    </div>
+
+    <div class="form" aria-hidden="false">
+      <div class="form-label">Email address</div>
+      <input class="input" type="email" placeholder="" aria-label="Email address" />
+      <div class="or-sep"><span>or</span></div>
+
+      <button class="google-btn" type="button" aria-label="Continue with Google" data-nourl>
+        <div class="g-chip">
+          <span class="g-avatar"></span>
+          <span>Continue as Mario</span>
+          <span class="g-caret">▾</span>
+        </div>
+        <div class="g-email">mario.solorza@finder…</div>
+        <div class="g-logo" aria-hidden="true"></div>
+      </button>
+
+      <div class="terms">
+        By creating an account you agree to our
+        <a href="#" rel="noopener">terms of use</a> and
+        <a href="#" rel="noopener">privacy policy</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Success-style Card (4th) ===== -->
+  <div class="success-card" id="successCard">
+    <div class="success-art" aria-label="Success art placeholder"></div>
+    <h3 class="success-title" data-edit="successTitle">You're a Finder member!</h3>
+    <div class="success-sub" data-edit="successSub">Continue on to the Chime website to open a Chime Checking Account.</div>
+    <button class="success-cta" type="button" data-nourl><span data-edit="successCtaText">GO TO CHIME</span></button>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button id="generateBtn">Generate banner JSON</button>
+    <button id="copyJsonBtn">Copy JSON</button>
+    <!--<button id="downloadJsonBtn">Download JSON</button>-->
+    <button id="resetBtn" title="Clear autosave and restore defaults">Reset All</button>
+  </div>
+
+  <pre id="jsonOutput"></pre>
+
+  <!-- URL Popover -->
+  <div class="popover" id="urlPopover" role="dialog" aria-modal="true">
+    <div style="font-size:12px; opacity:.8; margin-bottom:6px;" id="popoverTitle">Set URL</div>
+    <div class="popover__row">
+      <input type="url" id="popoverInput" />
+      <button class="btn--save" id="popoverSave">Save</button>
+      <button class="btn--cancel" id="popoverCancel">Cancel</button>
+    </div>
+  </div>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const STORAGE_KEY = 'finderRewardsCard_v1';
+
+  // ===== Nodes =====
+  const card = document.getElementById('rewardsCard');
+  const logoImg = document.getElementById('logoImg');
+  const ribbonEl = card.querySelector('[data-edit="ribbon"]');
+  const pillEl = card.querySelector('[data-edit="badge"]');
+  const headlineEl = card.querySelector('[data-edit="headline"]');
+  const copyEl = card.querySelector('[data-edit="copy"]');
+  const tncTextEl = card.querySelector('[data-edit="tncText"]');
+  const tncUrlControl = card.querySelector('[data-urlcontrol="tnc"]'); // single source of truth
+  const ctaTextEl = card.querySelector('[data-edit="ctaText"]');
+  const ctaLinkEl = card.querySelector('[data-edit="ctaLink"]');
+
+  const modalCard = document.getElementById('modalCard');
+  const signupCard = document.getElementById('signupCard');
+  const successCard = document.getElementById('successCard');
+
+  const generateBtn = document.getElementById('generateBtn');
+  const copyJsonBtn = document.getElementById('copyJsonBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const jsonOutput = document.getElementById('jsonOutput');
+
+  // Fields that must preserve inner HTML (to keep markup like <span class="amount">)
+  const HTML_KEYS = new Set(['headline','copy']);
+
+  // ===== Inline edit helpers =====
+  function enableInlineEdit(el, {selectAll=true}={}){
+    if(!el || el.getAttribute('contenteditable')==='true') return;
+    el.setAttribute('contenteditable','true');
+    const range = document.createRange();
+    const sel = window.getSelection();
+    range.selectNodeContents(el);
+    if(selectAll){ sel.removeAllRanges(); sel.addRange(range); }
+    el.focus();
+  }
+  function disableInlineEdit(el){ if(el) el.removeAttribute('contenteditable'); }
+
+  // ===== URL popover =====
+  const pop = document.getElementById('urlPopover');
+  const popInput = document.getElementById('popoverInput');
+  const popSave = document.getElementById('popoverSave');
+  const popCancel = document.getElementById('popoverCancel');
+  const popTitle = document.getElementById('popoverTitle');
+  let currentPopoverTarget = null;
+
+  function positionPopover(anchorEl){
+    pop.style.visibility='hidden'; pop.style.display='block';
+    const rect = anchorEl.getBoundingClientRect();
+    const pw = pop.offsetWidth || 320; const ph = pop.offsetHeight || 64;
+    let top = rect.bottom + 8 + window.scrollY; let left = rect.left + window.scrollX;
+    left = Math.min(left, window.scrollX + window.innerWidth - pw - 12);
+    left = Math.max(left, window.scrollX + 12);
+    if(top + ph > window.scrollY + window.innerHeight){ top = rect.top - ph - 8 + window.scrollY; }
+    pop.style.top = `${top}px`; pop.style.left = `${left}px`; pop.style.visibility='visible';
+  }
+  function openUrlPopover({title, value, onSave, anchorEl}){
+    currentPopoverTarget = { onSave };
+    popTitle.textContent = title || 'Set URL';
+    popInput.value = value || '';
+    if(anchorEl){ positionPopover(anchorEl); } else { pop.style.display = 'block'; }
+    popInput.focus(); popInput.select();
+  }
+  function closeUrlPopover(){ pop.style.display='none'; currentPopoverTarget=null; }
+  pop.addEventListener('mousedown', (e)=> e.stopPropagation());
+  pop.addEventListener('click', (e)=> e.stopPropagation());
+  popSave.addEventListener('click', ()=>{ if(currentPopoverTarget){ currentPopoverTarget.onSave(popInput.value.trim()); } closeUrlPopover(); autosave(); });
+  popCancel.addEventListener('click', closeUrlPopover);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && pop.style.display==='block'){ closeUrlPopover(); } });
+  document.addEventListener('mousedown', (e)=>{
+    if(pop.style.display==='block' && !pop.contains(e.target) && !e.target.closest('[data-edit="logo"],[data-urlcontrol="tnc"],[data-edit="ctaLink"]')){ closeUrlPopover(); }
+  });
+
+  // ===== Click handling for all cards =====
+  function attachInlineEditor(root){
+    if(!root) return;
+    root.addEventListener('click', (e)=>{
+      // 1) T&Cs URL popover when clicking the container (not the text span)
+      const tncContainer = e.target.closest('[data-urlcontrol="tnc"]');
+      if (tncContainer && !e.target.closest('[data-edit="tncText"]')) {
+        e.preventDefault();
+        openUrlPopover({
+          title:'Set Terms URL',
+          value: tncContainer.getAttribute('data-href') || '',
+          onSave:(url)=>tncContainer.setAttribute('data-href', url),
+          anchorEl: tncContainer
+        });
+        return;
+      }
+      // 2) Inner editable (including CTA label, T&Cs text, step titles/subs)
+      let target = e.target.closest('[data-edit]:not([data-edit="logo"]):not([data-edit="ctaLink"])');
+      if(target){
+        const key = target.dataset.edit || '';
+        if (/^step\d+$/.test(key)) {
+          const title = target.querySelector('[data-edit$="Title"]');
+          const sub   = target.querySelector('[data-edit$="Sub"]');
+          target = title || sub || target;
+        }
+        e.preventDefault();
+        enableInlineEdit(target);
+        return;
+      }
+      // 3) URL controls (logo, CTA link)
+      const urlControl = e.target.closest('[data-edit="logo"],[data-edit="ctaLink"]');
+      if(urlControl){
+        e.preventDefault();
+        if(urlControl.matches('[data-edit="logo"]')){
+          openUrlPopover({title:'Set image URL', value:logoImg.src, onSave:(url)=>{ logoImg.src=url; }, anchorEl: urlControl});
+          return;
+        }
+        if(urlControl.matches('[data-edit="ctaLink"]')){
+          openUrlPopover({title:'Set button URL', value:ctaLinkEl.getAttribute('href')||'', onSave:(url)=>ctaLinkEl.setAttribute('href',url), anchorEl: urlControl});
+          return;
+        }
+      }
+    });
+    // Save on Enter/Escape/blur for inline edits
+    root.addEventListener('keydown', (e)=>{
+      const el = e.target;
+      if(el && el.getAttribute && el.getAttribute('contenteditable')==='true'){
+        if(e.key==='Enter'){ e.preventDefault(); disableInlineEdit(el); autosave(); }
+        if(e.key==='Escape'){ e.preventDefault(); document.execCommand('undo'); disableInlineEdit(el); autosave(); }
+      }
+    });
+    root.addEventListener('focusout', (e)=>{
+      const el = e.target;
+      if(el && el.getAttribute && el.getAttribute('contenteditable')==='true'){ disableInlineEdit(el); autosave(); }
+    });
+  }
+  attachInlineEditor(card);
+  attachInlineEditor(modalCard);
+  attachInlineEditor(signupCard);
+  attachInlineEditor(successCard);
+
+  // Disable clicks on modal/success/google buttons (text still editable via spans)
+  ['.modal-card [data-nourl]', '.success-card [data-nourl]', '.sign-card .google-btn[data-nourl]'].forEach(sel => {
+    document.querySelectorAll(sel).forEach(btn => {
+      btn.addEventListener('click', (e)=>{ 
+        if (!e.target.closest('[data-edit]')) { e.preventDefault(); e.stopPropagation(); }
+      });
+    });
+  });
+
+  // Keyboard access to open T&Cs popover
+  if(tncUrlControl){
+    tncUrlControl.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        openUrlPopover({
+          title:'Set Terms URL',
+          value: tncUrlControl.getAttribute('data-href') || '',
+          onSave:(url)=>tncUrlControl.setAttribute('data-href',url),
+          anchorEl: tncUrlControl
+        });
+      }
+    });
+  }
+
+  // ===== Helpers for full JSON =====
+  function extractStepsForWelcome(root) {
+    const steps = [];
+    root.querySelectorAll('.steps .step').forEach(stepEl => {
+      const titleEl = stepEl.querySelector('[data-edit$="Title"]');
+      const subEl   = stepEl.querySelector('[data-edit$="Sub"]');
+      steps.push({
+        text: (titleEl ? titleEl.textContent.trim() : ''),
+        description: (subEl ? subEl.textContent.trim() : '')
+      });
+    });
+    return steps;
+  }
+
+  function splitFooterCopyAndTerms(footerText) {
+    let copyText = footerText.trim();
+    let termsText = "";
+    const tcRegex = /\bT&Cs?\s*apply\b\.?/i;
+    const match = copyText.match(tcRegex);
+    if (match) {
+      termsText = match[0].replace(/\.$/, '').trim();
+      copyText = copyText.replace(tcRegex, '').trim();
+      copyText = copyText.replace(/[.,;:]\s*$/, '').trim();
+    }
+    return { copyText, termsText };
+  }
+
+  // ===== Build FULL JSON (modal + banner + common) =====
+  function buildFullJson() {
+    // Banner
+    const banner = {
+      mode: 'modal',
+      title: headlineEl.textContent.trim(),
+      ctaText: ctaTextEl.textContent.trim(),
+      iconUrl: logoImg.getAttribute('src'),
+      copyText: copyEl.innerText.trim(),
+      metaData: {
+        niche: pillEl.textContent.trim().toUpperCase(),
+        productId: 'example-product-id',
+        productName: 'Example Product',
+        redirectUrl: ctaLinkEl.getAttribute('href') || '#',
+        providerName: 'Example Provider'
+      },
+      badgeText: ribbonEl.textContent.trim().toUpperCase(),
+      termsText: (tncTextEl ? tncTextEl.textContent.trim() : ''),
+      titleHighlight: headlineEl.querySelector('.amount') ? headlineEl.querySelector('.amount').textContent.trim() : ''
+    };
+
+    // Members.detailStep
+    const members_detailStep = {
+      title: modalCard.querySelector('[data-edit="modalTitle"]')?.textContent.trim() || '',
+      ctaText: successCard.querySelector('[data-edit="successCtaText"]')?.textContent.trim() || '',
+      subtitleText: signupCard.querySelector('[data-edit="signSubtitle"]')?.textContent.trim() || ''
+    };
+
+    // Members.welcomeStep
+    const members_steps = extractStepsForWelcome(modalCard);
+    const footerEl = modalCard.querySelector('[data-edit="modalFooter"]');
+    const footerText = footerEl ? footerEl.textContent.trim() : '';
+    const split = splitFooterCopyAndTerms(footerText);
+
+    const members_welcomeStep = {
+      items: members_steps,
+      title: modalCard.querySelector('[data-edit="modalTitle"]')?.textContent.trim() || '',
+      copyText: split.copyText, // "Ends on …"
+      abortText: modalCard.querySelector('[data-edit="modalSecondaryText"]')?.textContent.trim() || '',
+      termsText: split.termsText, // "T&Cs apply"
+      continueText: modalCard.querySelector('[data-edit="modalPrimaryText"]')?.textContent.trim() || '',
+      subtitleText: ''
+    };
+
+    // Members.redirectStep
+    const members_redirectStep = {
+      title: successCard.querySelector('[data-edit="successTitle"]')?.textContent.trim() || '',
+      ctaText: successCard.querySelector('[data-edit="successCtaText"]')?.textContent.trim() || '',
+      subtitleText: successCard.querySelector('[data-edit="successSub"]')?.textContent.trim() || ''
+    };
+
+    // Anonymous.loginStep
+    const anonymous_loginStep = {
+      title: signupCard.querySelector('[data-edit="signTitle"]')?.textContent.trim() || '',
+      subtitleText: signupCard.querySelector('[data-edit="signSubtitle"]')?.textContent.trim() || ''
+    };
+
+    // Anonymous.welcomeStep (keeps T&Cs inline in copyText)
+    const anonymous_welcomeStep = {
+      items: members_steps,
+      title: modalCard.querySelector('[data-edit="modalTitle"]')?.textContent.trim() || '',
+      copyText: footerText, // unchanged (e.g., "Ends on ... T&Cs apply")
+      abortText: modalCard.querySelector('[data-edit="modalSecondaryText"]')?.textContent.trim() || '',
+      termsText: '',
+      continueText: modalCard.querySelector('[data-edit="modalPrimaryText"]')?.textContent.trim() || '',
+      subtitleText: ''
+    };
+
+    // Common
+    const common = {
+      termsUrl: (tncUrlControl?.getAttribute('data-href')) || ''
+    };
+
+    return {
+      modal: {
+        members: {
+          detailStep: members_detailStep,
+          welcomeStep: members_welcomeStep,
+          redirectStep: members_redirectStep
+        },
+        anonymous: {
+          loginStep: anonymous_loginStep,
+          welcomeStep: anonymous_welcomeStep
+        }
+      },
+      banner,
+      common
+    };
+  }
+
+  // ===== JSON output helpers =====
+  function showJson() {
+    const json = buildFullJson();
+    jsonOutput.textContent = JSON.stringify(json, null, 2);
+    jsonOutput.style.display = 'block';
+    return json;
+  }
+
+  // Buttons: Generate / Copy (Download removed)
+  generateBtn?.addEventListener('click', showJson);
+
+  copyJsonBtn?.addEventListener('click', async ()=>{
+    const json = showJson();
+    try{
+      await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+      copyJsonBtn.textContent = 'Copied!';
+      setTimeout(()=> copyJsonBtn.textContent = 'Copy JSON', 1200);
+    }catch(_){}
+  });
+
+  // Ctrl/Cmd + S => generate JSON
+  document.addEventListener('keydown', (e)=>{
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='s'){
+      e.preventDefault();
+      showJson();
+    }
+  });
+
+  // ===== Autosave / Restore / Reset =====
+  // Take default snapshot BEFORE any restore so Reset returns to design defaults
+  const defaultSnapshot = snapshot();
+
+  function snapshot(){
+    const fields = {};
+    document.querySelectorAll('[data-edit]').forEach(el=>{
+      const key = el.dataset.edit;
+      // Skip structural/URL containers so we don't destroy markup
+      if (key==='logo' || key==='ctaLink') return;
+      if (/^step\d+$/.test(key)) return; // keep step grid/number structure
+      // Preserve innerHTML for fields that have markup (headline, copy)
+      fields[key] = HTML_KEYS.has(key) ? el.innerHTML : el.textContent;
+    });
+    return {
+      fields,
+      urls:{
+        logo: logoImg.getAttribute('src') || '',
+        cta: ctaLinkEl.getAttribute('href') || '',
+        tnc: tncUrlControl?.getAttribute('data-href') || ''
+      }
+    };
+  }
+
+  function applySnapshot(snap){
+    if(!snap) return;
+    Object.entries(snap.fields||{}).forEach(([key,val])=>{
+      const el = document.querySelector(`[data-edit="${key}"]`);
+      if(el){
+        if (HTML_KEYS.has(key)) { el.innerHTML = val; }
+        else { el.textContent = val; }
+      }
+    });
+    if(snap.urls){
+      if(snap.urls.logo !== undefined) logoImg.setAttribute('src', snap.urls.logo || '');
+      if(snap.urls.cta  !== undefined) ctaLinkEl.setAttribute('href', snap.urls.cta || '');
+      if(tncUrlControl && snap.urls.tnc !== undefined) tncUrlControl.setAttribute('data-href', snap.urls.tnc || '');
+    }
+  }
+
+  function autosave(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot())); }catch(_){}
+  }
+
+  function restore(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){ applySnapshot(JSON.parse(raw)); }
+    }catch(_){}
+  }
+
+  function resetAll(){
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(_){}
+    applySnapshot(defaultSnapshot);  // restore original DOM-safe defaults (keeps $150 span)
+    jsonOutput.style.display='none';
+  }
+
+  // Save after edits to any editable node
+  document.addEventListener('input', (e)=>{
+    if(e.target && e.target.closest('[data-edit]')) autosave();
+  });
+
+  // Reset button
+  resetBtn?.addEventListener('click', resetAll);
+
+  // Initial restore (applies autosaved state if present)
+  restore();
+});
+</script>
+
+</body>
+</html>
