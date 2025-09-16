@@ -1,0 +1,426 @@
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const STORAGE_KEY = 'finderRewardsCard_v1';
+
+  // ===== Nodes =====
+  const card = document.getElementById('rewardsCard');
+  let logoImg = document.getElementById('logoImg'); // ← let so we can rebind after replace
+  const logoBox = card.querySelector('[data-edit="logo"]');
+  const ribbonEl = card.querySelector('[data-edit="ribbon"]');
+  const pillEl = card.querySelector('[data-edit="badge"]');
+  const headlineEl = card.querySelector('[data-edit="headline"]');
+  const copyEl = card.querySelector('[data-edit="copy"]');
+  const tncTextEl = card.querySelector('[data-edit="tncText"]');
+  const tncUrlControl = card.querySelector('[data-urlcontrol="tnc"]'); // single source of truth
+  const ctaTextEl = card.querySelector('[data-edit="ctaText"]');
+  const ctaLinkEl = card.querySelector('[data-edit="ctaLink"]');
+
+  const modalCard = document.getElementById('modalCard');
+  const signupCard = document.getElementById('signupCard');
+  const successCard = document.getElementById('successCard');
+
+  const generateBtn = document.getElementById('generateBtn');
+  const copyJsonBtn = document.getElementById('copyJsonBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const jsonOutput = document.getElementById('jsonOutput');
+
+  // Fields that must preserve inner HTML (to keep markup like <span class="amount">)
+  const HTML_KEYS = new Set(['headline','copy']);
+
+  // ===== Helpers =====
+  function enableInlineEdit(el, {selectAll=true}={}){
+    if(!el || el.getAttribute('contenteditable')==='true') return;
+    el.setAttribute('contenteditable','true');
+    const range = document.createRange();
+    const sel = window.getSelection();
+    range.selectNodeContents(el);
+    if(selectAll){ sel.removeAllRanges(); sel.addRange(range); }
+    el.focus();
+  }
+  function disableInlineEdit(el){ if(el) el.removeAttribute('contenteditable'); }
+
+  // Normalize a possibly protocol-less URL
+  function normalizeUrl(url){
+    let u = (url || '').trim();
+    if(!u) return '';
+    if(/^\/\//.test(u)) u = 'https:' + u;
+    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u;
+  }
+
+  // Hard-swap the <img> node to guarantee repaint
+  function setLogo(url){
+    if(!logoBox) return;
+    const incoming = normalizeUrl(url);
+    // Build a fresh <img> and replace the old node
+    const newImg = document.createElement('img');
+    newImg.alt = 'Logo';
+    newImg.id = 'logoImg';                // keep same id
+    newImg.referrerPolicy = 'no-referrer';
+    // mirror sizing behavior
+    newImg.style.maxHeight = '60%';
+    newImg.style.maxWidth = '80%';
+    newImg.style.objectFit = 'contain';
+    newImg.style.display = 'block';
+
+    // If we want an immediate visual change even before load, set src now.
+    // To handle "same URL" caching, add a cache-buster when equal.
+    const current = logoImg?.getAttribute('src') || '';
+    let finalUrl = incoming;
+    if (incoming && current === incoming) {
+      const sep = incoming.includes('?') ? '&' : '?';
+      finalUrl = `${incoming}${sep}_cb=${Date.now()}`;
+    }
+
+    newImg.src = finalUrl || ''; // if empty, will show placeholder box background
+    // Replace node in DOM
+    if (logoImg && logoImg.parentNode === logoBox) {
+      logoBox.replaceChild(newImg, logoImg);
+    } else {
+      // Fallback: clear and append
+      logoBox.innerHTML = '';
+      logoBox.appendChild(newImg);
+    }
+    // Rebind global reference
+    logoImg = newImg;
+  }
+
+  // ===== URL popover =====
+  const pop = document.getElementById('urlPopover');
+  const popInput = document.getElementById('popoverInput');
+  const popSave = document.getElementById('popoverSave');
+  const popCancel = document.getElementById('popoverCancel');
+  const popTitle = document.getElementById('popoverTitle');
+  let currentPopoverTarget = null;
+
+  function positionPopover(anchorEl){
+    pop.style.visibility='hidden'; pop.style.display='block';
+    const rect = anchorEl.getBoundingClientRect();
+    const pw = pop.offsetWidth || 320; const ph = pop.offsetHeight || 64;
+    let top = rect.bottom + 8 + window.scrollY; let left = rect.left + window.scrollX;
+    left = Math.min(left, window.scrollX + window.innerWidth - pw - 12);
+    left = Math.max(left, window.scrollX + 12);
+    if(top + ph > window.scrollY + window.innerHeight){ top = rect.top - ph - 8 + window.scrollY; }
+    pop.style.top = `${top}px`; pop.style.left = `${left}px`; pop.style.visibility='visible';
+  }
+  function openUrlPopover({title, value, onSave, anchorEl}){
+    currentPopoverTarget = { onSave };
+    popTitle.textContent = title || 'Set URL';
+    popInput.value = value || '';
+    if(anchorEl){ positionPopover(anchorEl); } else { pop.style.display = 'block'; }
+    popInput.focus(); popInput.select();
+  }
+  function closeUrlPopover(){ pop.style.display='none'; currentPopoverTarget=null; }
+  pop.addEventListener('mousedown', (e)=> e.stopPropagation());
+  pop.addEventListener('click', (e)=> e.stopPropagation());
+  popSave.addEventListener('click', ()=>{ if(currentPopoverTarget){ currentPopoverTarget.onSave(popInput.value.trim()); } closeUrlPopover(); autosave(); });
+  popCancel.addEventListener('click', closeUrlPopover);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && pop.style.display==='block'){ closeUrlPopover(); } });
+  document.addEventListener('mousedown', (e)=>{
+    if(pop.style.display==='block' && !pop.contains(e.target) && !e.target.closest('[data-edit="logo"],[data-urlcontrol="tnc"],[data-edit="ctaLink"]')){ closeUrlPopover(); }
+  });
+
+  // ===== Click handling for all cards =====
+  function attachInlineEditor(root){
+    if(!root) return;
+    root.addEventListener('click', (e)=>{
+      // 1) T&Cs URL popover when clicking the container (not the text span)
+      const tncContainer = e.target.closest('[data-urlcontrol="tnc"]');
+      if (tncContainer && !e.target.closest('[data-edit="tncText"]')) {
+        e.preventDefault();
+        openUrlPopover({
+          title:'Set Terms URL',
+          value: tncContainer.getAttribute('data-href') || '',
+          onSave:(url)=>tncContainer.setAttribute('data-href', normalizeUrl(url)),
+          anchorEl: tncContainer
+        });
+        return;
+      }
+      // 2) Inner editable (including CTA label, T&Cs text, step titles/subs)
+      let target = e.target.closest('[data-edit]:not([data-edit="logo"]):not([data-edit="ctaLink"])');
+      if(target){
+        const key = target.dataset.edit || '';
+        if (/^step\d+$/.test(key)) {
+          const title = target.querySelector('[data-edit$="Title"]');
+          const sub   = target.querySelector('[data-edit$="Sub"]');
+          target = title || sub || target;
+        }
+        e.preventDefault();
+        enableInlineEdit(target);
+        return;
+      }
+      // 3) URL controls (logo, CTA link)
+      const urlControl = e.target.closest('[data-edit="logo"],[data-edit="ctaLink"]');
+      if(urlControl){
+        e.preventDefault();
+        if(urlControl.matches('[data-edit="logo"]')){
+          openUrlPopover({
+            title:'Set image URL',
+            value: logoImg?.getAttribute('src') || '',
+            onSave:(url)=>{ setLogo(url); },
+            anchorEl: urlControl
+          });
+          return;
+        }
+        if(urlControl.matches('[data-edit="ctaLink"]')){
+          openUrlPopover({
+            title:'Set button URL',
+            value: ctaLinkEl.getAttribute('href')||'',
+            onSave:(url)=>ctaLinkEl.setAttribute('href', normalizeUrl(url)),
+            anchorEl: urlControl
+          });
+          return;
+        }
+      }
+    });
+    // Save on Enter/Escape/blur for inline edits
+    root.addEventListener('keydown', (e)=>{
+      const el = e.target;
+      if(el && el.getAttribute && el.getAttribute('contenteditable')==='true'){
+        if(e.key==='Enter'){ e.preventDefault(); disableInlineEdit(el); autosave(); }
+        if(e.key==='Escape'){ e.preventDefault(); document.execCommand('undo'); disableInlineEdit(el); autosave(); }
+      }
+    });
+    root.addEventListener('focusout', (e)=>{
+      const el = e.target;
+      if(el && el.getAttribute && el.getAttribute('contenteditable')==='true'){ disableInlineEdit(el); autosave(); }
+    });
+  }
+  attachInlineEditor(card);
+  attachInlineEditor(modalCard);
+  attachInlineEditor(signupCard);
+  attachInlineEditor(successCard);
+
+  // Disable clicks on modal/success/google buttons (text still editable via spans)
+  ['.modal-card [data-nourl]', '.success-card [data-nourl]', '.sign-card .google-btn[data-nourl]'].forEach(sel => {
+    document.querySelectorAll(sel).forEach(btn => {
+      btn.addEventListener('click', (e)=>{ 
+        if (!e.target.closest('[data-edit]')) { e.preventDefault(); e.stopPropagation(); }
+      });
+    });
+  });
+
+  // Keyboard access to open T&Cs popover
+  if(tncUrlControl){
+    tncUrlControl.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        openUrlPopover({
+          title:'Set Terms URL',
+          value: tncUrlControl.getAttribute('data-href') || '',
+          onSave:(url)=>tncUrlControl.setAttribute('data-href', normalizeUrl(url)),
+          anchorEl: tncUrlControl
+        });
+      }
+    });
+  }
+
+  // ===== Helpers for full JSON =====
+  function extractStepsForWelcome(root) {
+    const steps = [];
+    root.querySelectorAll('.steps .step').forEach(stepEl => {
+      const titleEl = stepEl.querySelector('[data-edit$="Title"]');
+      const subEl   = stepEl.querySelector('[data-edit$="Sub"]');
+      steps.push({
+        text: (titleEl ? titleEl.textContent.trim() : ''),
+        description: (subEl ? subEl.textContent.trim() : '')
+      });
+    });
+    return steps;
+  }
+
+  function splitFooterCopyAndTerms(footerText) {
+    let copyText = footerText.trim();
+    let termsText = "";
+    const tcRegex = /\bT&Cs?\s*apply\b\.?/i;
+    const match = copyText.match(tcRegex);
+    if (match) {
+      termsText = match[0].replace(/\.$/, '').trim();
+      copyText = copyText.replace(tcRegex, '').trim();
+      copyText = copyText.replace(/[.,;:]\s*$/, '').trim();
+    }
+    return { copyText, termsText };
+  }
+
+  // ===== Build FULL JSON (modal + banner + common) =====
+  function buildFullJson() {
+    // Banner
+    const banner = {
+      mode: 'modal',
+      title: headlineEl.textContent.trim(),
+      ctaText: ctaTextEl.textContent.trim(),
+      iconUrl: logoImg?.getAttribute('src') || '',
+      copyText: copyEl.innerText.trim(),
+      metaData: {
+        niche: pillEl.textContent.trim().toUpperCase(),
+        productId: 'example-product-id',
+        productName: 'Example Product',
+        redirectUrl: ctaLinkEl.getAttribute('href') || '#',
+        providerName: 'Example Provider'
+      },
+      badgeText: ribbonEl.textContent.trim().toUpperCase(),
+      termsText: (tncTextEl ? tncTextEl.textContent.trim() : ''),
+      titleHighlight: headlineEl.querySelector('.amount') ? headlineEl.querySelector('.amount').textContent.trim() : ''
+    };
+
+    // Members.detailStep
+    const members_detailStep = {
+      title: modalCard.querySelector('[data-edit="modalTitle"]')?.textContent.trim() || '',
+      ctaText: successCard.querySelector('[data-edit="successCtaText"]')?.textContent.trim() || '',
+      subtitleText: signupCard.querySelector('[data-edit="signSubtitle"]')?.textContent.trim() || ''
+    };
+
+    // Members.welcomeStep
+    const members_steps = extractStepsForWelcome(modalCard);
+    const footerEl = modalCard.querySelector('[data-edit="modalFooter"]');
+    const footerText = footerEl ? footerEl.textContent.trim() : '';
+    const split = splitFooterCopyAndTerms(footerText);
+
+    const members_welcomeStep = {
+      items: members_steps,
+      title: modalCard.querySelector('[data-edit="modalTitle"]')?.textContent.trim() || '',
+      copyText: split.copyText, // "Ends on …"
+      abortText: modalCard.querySelector('[data-edit="modalSecondaryText"]')?.textContent.trim() || '',
+      termsText: split.termsText, // "T&Cs apply"
+      continueText: modalCard.querySelector('[data-edit="modalPrimaryText"]')?.textContent.trim() || '',
+      subtitleText: ''
+    };
+
+    // Members.redirectStep
+    const members_redirectStep = {
+      title: successCard.querySelector('[data-edit="successTitle"]')?.textContent.trim() || '',
+      ctaText: successCard.querySelector('[data-edit="successCtaText"]')?.textContent.trim() || '',
+      subtitleText: successCard.querySelector('[data-edit="successSub"]')?.textContent.trim() || ''
+    };
+
+    // Anonymous.loginStep
+    const anonymous_loginStep = {
+      title: signupCard.querySelector('[data-edit="signTitle"]')?.textContent.trim() || '',
+      subtitleText: signupCard.querySelector('[data-edit="signSubtitle"]')?.textContent.trim() || ''
+    };
+
+    // Anonymous.welcomeStep (keeps T&Cs inline in copyText)
+    const anonymous_welcomeStep = {
+      items: members_steps,
+      title: modalCard.querySelector('[data-edit="modalTitle"]')?.textContent.trim() || '',
+      copyText: footerText, // unchanged (e.g., "Ends on ... T&Cs apply")
+      abortText: modalCard.querySelector('[data-edit="modalSecondaryText"]')?.textContent.trim() || '',
+      termsText: '',
+      continueText: modalCard.querySelector('[data-edit="modalPrimaryText"]')?.textContent.trim() || '',
+      subtitleText: ''
+    };
+
+    // Common
+    const common = {
+      termsUrl: (tncUrlControl?.getAttribute('data-href')) || ''
+    };
+
+    return {
+      modal: {
+        members: {
+          detailStep: members_detailStep,
+          welcomeStep: members_welcomeStep,
+          redirectStep: members_redirectStep
+        },
+        anonymous: {
+          loginStep: anonymous_loginStep,
+          welcomeStep: anonymous_welcomeStep
+        }
+      },
+      banner,
+      common
+    };
+  }
+
+  // ===== JSON output helpers =====
+  function showJson() {
+    const json = buildFullJson();
+    jsonOutput.textContent = JSON.stringify(json, null, 2);
+    jsonOutput.style.display = 'block';
+    return json;
+  }
+
+  // Buttons: Generate / Copy
+  generateBtn?.addEventListener('click', showJson);
+
+  copyJsonBtn?.addEventListener('click', async ()=>{
+    const json = showJson();
+    try{
+      await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+      copyJsonBtn.textContent = 'Copied!';
+      setTimeout(()=> copyJsonBtn.textContent = 'Copy JSON', 1200);
+    }catch(_){}
+  });
+
+  // Ctrl/Cmd + S => generate JSON
+  document.addEventListener('keydown', (e)=>{
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='s'){
+      e.preventDefault();
+      showJson();
+    }
+  });
+
+  // ===== Autosave / Restore / Reset =====
+  const defaultSnapshot = snapshot();
+
+  function snapshot(){
+    const fields = {};
+    document.querySelectorAll('[data-edit]').forEach(el=>{
+      const key = el.dataset.edit;
+      if (key==='logo' || key==='ctaLink') return;
+      if (/^step\d+$/.test(key)) return;
+      fields[key] = HTML_KEYS.has(key) ? el.innerHTML : el.textContent;
+    });
+    return {
+      fields,
+      urls:{
+        logo: logoImg?.getAttribute('src') || '',
+        cta: ctaLinkEl.getAttribute('href') || '',
+        tnc: tncUrlControl?.getAttribute('data-href') || ''
+      }
+    };
+  }
+
+  function applySnapshot(snap){
+    if(!snap) return;
+    Object.entries(snap.fields||{}).forEach(([key,val])=>{
+      const el = document.querySelector(`[data-edit="${key}"]`);
+      if(el){
+        if (HTML_KEYS.has(key)) { el.innerHTML = val; }
+        else { el.textContent = val; }
+      }
+    });
+    if(snap.urls){
+      if(snap.urls.logo !== undefined) setLogo(snap.urls.logo);
+      if(snap.urls.cta  !== undefined) ctaLinkEl.setAttribute('href', snap.urls.cta || '');
+      if(tncUrlControl && snap.urls.tnc !== undefined) tncUrlControl.setAttribute('data-href', snap.urls.tnc || '');
+    }
+  }
+
+  function autosave(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot())); }catch(_){}
+  }
+
+  function restore(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){ applySnapshot(JSON.parse(raw)); }
+    }catch(_){}
+  }
+
+  function resetAll(){
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(_){}
+    applySnapshot(defaultSnapshot);
+    jsonOutput.style.display='none';
+  }
+
+  document.addEventListener('input', (e)=>{
+    if(e.target && e.target.closest('[data-edit]')) autosave();
+  });
+
+  resetBtn?.addEventListener('click', resetAll);
+
+  // Initial restore
+  restore();
+});
+</script>
